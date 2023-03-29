@@ -3,10 +3,9 @@ LABEL maintainer="mplabs.tech"
 
 ENV PYTHONUNBUFFERED 1
 
-COPY ./requirements.txt /requirements.txt
-COPY ./requirements-dev.txt /requirements-dev.txt
+COPY ./requirements.txt /tmp/requirements.txt
+COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 COPY ./app /app
-
 WORKDIR /app
 EXPOSE 8000
 
@@ -18,6 +17,7 @@ RUN pip install --upgrade pip && \
     apk add --update --no-cache libpq-dev gcc && \
     apk add --update --no-cache --virtual .tmp-build-deps curl \
         build-base postgresql-dev musl-dev zlib zlib-dev
+
 
 RUN pip install -r /tmp/requirements.txt && \
     if [ $DEV = "true" ]; \
