@@ -1,1 +1,1 @@
-# django-postgres-template
+# Backend for imbuto
