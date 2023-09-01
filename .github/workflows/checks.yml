@@ -5,7 +5,7 @@ on: [push]
 
 jobs:
   test-lint:
-    name: Test and Lint ${{APP_NAME}}
+    name: Test and Lint Imbuto Backend
     runs-on: ubuntu-latest
     env:
       DB_HOST: db
@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Testing ${{APP_NAME}}
+      - name: Testing Imbuto Backend
         run: docker-compose run --rm app sh -c "python check_db.py --service-name db --ip db --port 5432 && python manage.py test"
       - name: Verifying code integrity
         run: docker-compose run --rm app sh -c "flake8"
