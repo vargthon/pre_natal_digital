@@ -7,12 +7,22 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView
 )
+from core import views
 
 from rest_framework import routers
 
 app_name = 'core'
 
 router = routers.DefaultRouter()
+router.register(
+    'users',
+    views.UserViewSet,
+    basename='user')
+router.register(
+    'admin/users',
+    views.AdminUserViewSet,
+    basename='admin-user')
+
 
 urlpatterns = [
     path('', include(router.urls)),

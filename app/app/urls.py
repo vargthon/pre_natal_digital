@@ -21,5 +21,5 @@ urlpatterns = [
     path(
         'api/v1/',
         include('core.urls', namespace='core'),
-    )
+    ),
 ]

@@ -48,3 +48,11 @@ class UserModelTests(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
+
+    def test_create_admin(self):
+        """Create admin user."""
+        data = user_model_data_test()
+        user = get_user_model().objects.create_admin(**data)
+
+        self.assertTrue(user.is_superuser)
+        self.assertFalse(user.is_staff)
