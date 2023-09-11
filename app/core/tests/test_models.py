@@ -46,7 +46,7 @@ class UserModelTests(TestCase):
         data = user_model_data_test()
         user = get_user_model().objects.create_superuser(**data)
 
-        self.assertTrue(user.is_superuser)
+        self.assertFalse(user.is_superuser)
         self.assertTrue(user.is_staff)
 
     def test_create_admin(self):

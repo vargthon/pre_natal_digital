@@ -4,8 +4,7 @@ Views for the core app.
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets
 from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAdminUser
+    IsAuthenticated
 )
 from rest_framework.exceptions import PermissionDenied
 
@@ -37,7 +36,7 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Create a new user.
         """
-        if self.request.user.is_superuser:
+        if self.request.user.is_staff:
             return serializer.save()
         else:
             raise PermissionDenied("Only superuser can create users.")
@@ -69,7 +68,6 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     Manage users in the database.
     """
     serializer_class = serializers.UserSerializer
-    permission_classes = (IsAdminUser,)
     queryset = get_user_model().objects.all()
 
     def get_object(self):
@@ -82,16 +80,25 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         """
         Create a new user.
         """
-        return serializer.save()
+        if self.request.user.is_superuser:
+            return serializer.save()
+        else:
+            raise PermissionDenied("Only admin can create admins.")
 
     def perform_update(self, serializer):
         """
         Update a user.
         """
-        return serializer.save()
+        if self.request.user.is_superuser:
+            return serializer.save()
+        else:
+            raise PermissionDenied("Only admin can change admins.")
 
     def perform_destroy(self, instance):
         """
         Delete a user.
         """
-        instance.delete()
+        if self.request.user.is_superuser:
+            instance.delete()
+        else:
+            raise PermissionDenied("Only admin can delete admins.")

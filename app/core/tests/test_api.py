@@ -31,13 +31,20 @@ def create_superuser(**params):
     return get_user_model().objects.create_superuser(**params)
 
 
+def create_admin(**params):
+    """
+    Helper function to create an admin.
+    """
+    return get_user_model().objects.create_admin(**params)
+
+
 class UserApiTests(TestCase):
     """
     Test the users API (public).
     """
 
     def setUp(self):
-        self.user = create_superuser(**USER_DATA_TEST)
+        self.user = create_user(**USER_DATA_TEST)
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
@@ -104,7 +111,19 @@ class UserApiTests(TestCase):
         """
         Test that user can get data of himself.
         """
-        pass
+        res = self.client.get(
+            reverse('core:user-detail', args=[self.user.id]), format='json')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_cannot_get_other_data(self):
+        """
+        Test that user cannot get data of other user.
+        """
+        user = create_user(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.get(
+            reverse('core:user-detail', args=[self.user.id]), format='json')
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_user_cannot_create_new_user(self):
         """
@@ -117,6 +136,17 @@ class UserApiTests(TestCase):
             'name': 'Test User22',
             'password': 'testpass123',
         })
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_users_cannot_create_supervisors(self):
+        """
+        Test that user cannot create supervisor.
+        """
+        res = self.client.post(
+            CREATE_USER_URL,
+            SUPERVISOR_DATA_TEST,
+            format='json'
+        )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
 
@@ -211,6 +241,17 @@ class SupervisorApiTest(TestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_supervisor_sucessfull(self):
+        """
+        Test creating supervisor with valid payload is successful.
+        """
+        res = self.client.post(
+            reverse('core:user-list'),
+            SUPERVISOR_DATA_TEST,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
     def test_delete_user(self):
         """
         Test deleting user.
@@ -257,40 +298,212 @@ class AdminApiTest(TestCase):
     """
 
     def setUp(self):
+        self.admin_user = create_admin(**USER_DATA_TEST)
         self.client = APIClient()
+        self.client.force_authenticate(user=self.admin_user)
 
     def test_create_valid_admin_success(self):
         """
         Test creating admin with valid payload is successful.
         """
-        pass
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'adminuser@gmail.com',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
     def test_create_exist_admin_fail(self):
         """
         Test creating admin that already exists fails.
         """
-        pass
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_admin_with_short_password_fail(self):
         """
         Test creating admin with password that is too short fails.
         """
-        pass
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'emailadmin@gmail.com',
+                'name': 'Test Admin',
+                'password': '123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_admin_with_invalid_email_fail(self):
         """
         Test creating admin with invalid email fails.
         """
-        pass
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'emailadmin',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_delete_admin(self):
         """
         Test deleting admin.
         """
-        pass
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'adminnewuser@gmail.com',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        user = get_user_model().objects.get(pk=res.data['id'])
+        res = self.client.delete(
+            reverse('core:admin-user-detail', args=[user.id]),
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_update_admin(self):
         """
         Test updating admin.
         """
-        pass
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'adminnewuser@gmail.com',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        user = get_user_model().objects.get(pk=res.data['id'])
+        res = self.client.patch(
+            reverse('core:admin-user-detail', args=[user.id]),
+            {
+                'name': 'Test Admin UPDATED', },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_user_cannot_create_admin(self):
+        """
+        Test that user cannot create admin.
+        """
+        user = create_user(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'adminusertotest@gmail.com',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_supervisor_cannot_create_admin(self):
+        """
+        Test that supervisor cannot create admin.
+        """
+        user = create_superuser(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'admintestcreate@gmail.com',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_cannot_update_delete_admin(self):
+        """
+        Test that user cannot update or delete admin.
+        """
+        user = create_user(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.delete(
+            reverse('core:admin-user-detail', args=[self.admin_user.id]),
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_user_cannot_update_admin(self):
+        """
+        Test that user cannot update admin.
+        """
+        user = create_user(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.patch(
+            reverse('core:admin-user-detail', args=[self.admin_user.id]),
+            {
+                'name': 'Test Admin UPDATED', },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_supervisor_cannot_update_admin(self):
+        """
+        Test that supervisor cannot update admin.
+        """
+        user = create_superuser(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.patch(
+            reverse('core:admin-user-detail', args=[self.admin_user.id]),
+            {
+                'name': 'Test Admin UPDATED', },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_supervisor_cannot_delete_admin(self):
+        """
+        Test that supervisor cannot delete admin.
+        """
+        user = create_superuser(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.delete(
+            reverse('core:admin-user-detail', args=[self.admin_user.id]),
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_supervisor_cannot_create_admin_users(self):
+        """
+        Test that supervisor cannot create admin.
+        """
+        user = create_superuser(**USER_DATA_TEST_SAMPLE)
+        self.client.force_authenticate(user=user)
+        res = self.client.post(
+            reverse('core:admin-user-list'),
+            {
+                'email': 'adminnewuser@gmail.com',
+                'name': 'Test Admin',
+                'password': 'testpass123'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
