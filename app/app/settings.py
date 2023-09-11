@@ -133,5 +133,8 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     # other settings
-    "SCHEMA_PATH_PREFIX": r"/api/v[1-9][0-9]*"
+    "SCHEMA_PATH_PREFIX": r"/api/v[1-9][0-9]*",
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }

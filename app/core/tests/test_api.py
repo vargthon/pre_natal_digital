@@ -507,3 +507,98 @@ class AdminApiTest(TestCase):
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class AuthenticationApiTest(TestCase):
+    """
+    Tests for Authentication API
+    """
+
+    def setUp(self):
+        self.user = create_superuser(**USER_DATA_TEST)
+        self.client = APIClient()
+
+    def test_login_success(self):
+        """
+        Test login success.
+        """
+        res = self.client.post(
+            reverse('core:token'),
+            {
+                'email': USER_DATA_TEST['email'],
+                'password': USER_DATA_TEST['password']
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_login_fail(self):
+        """
+        Test login fail.
+        """
+        res = self.client.post(
+            reverse('core:token'),
+            {
+                'email': USER_DATA_TEST['email'],
+                'password': 'wrongpassword'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_refresh_token_success(self):
+        """
+        Test refresh token success.
+        """
+        res = self.client.post(
+            reverse('core:token'),
+            {
+                'email': USER_DATA_TEST['email'],
+                'password': USER_DATA_TEST['password']
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        res = self.client.post(
+            reverse('core:refresh-token'),
+            {
+                'refresh': res.data['refresh']
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_refresh_token_fail(self):
+        """
+        Test refresh token fail.
+        """
+        res = self.client.post(
+            reverse('core:refresh-token'),
+            {
+                'refresh': 'wrongrefresh'
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_verify_token_success(self):
+        """
+        Test verify token success.
+        """
+        res = self.client.post(
+            reverse('core:token'),
+            {
+                'email': USER_DATA_TEST['email'],
+                'password': USER_DATA_TEST['password']
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        res = self.client.post(
+            reverse('core:verify-token'),
+            {
+                'token': res.data['access']
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
