@@ -13,24 +13,36 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(self, email, password=None, **extra_fields):
-        """Creates and saves a new user"""
+        """Create and save a new user"""
         if not email:
             raise ValidationError('Users must have an email address')
         user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
+        user.is_active = True
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password):
-        """Creates and saves a new superuser"""
-        user = self.create_user(email, password)
-        user.is_superuser = True
+    def create_superuser(self, email, password, **extra_fields):
+        """Create and save a new superuser"""
+        user = self.create_user(email, password, **extra_fields)
+        user.is_superuser = False
         user.is_staff = True
 
         user.save(using=self._db)
 
         return user
+
+    def create_admin(self, email, password, **extra_fields):
+        """Create and save a new admin"""
+        user = self.create_user(email, password, **extra_fields)
+        user.is_superuser = True
+        user.is_staff = False
+
+        user.save(using=self._db)
+
+        return user
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
