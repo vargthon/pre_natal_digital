@@ -2,6 +2,8 @@
 Serializers for core app
 """
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 from core.models import (
     User
@@ -28,3 +30,15 @@ class UserSerializer(serializers.ModelSerializer):
                 'min_length': 8
             }
         }
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['admin'] = user.is_staff
+        # ...
+
+        return token

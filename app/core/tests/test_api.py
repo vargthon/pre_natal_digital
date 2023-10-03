@@ -135,7 +135,7 @@ class UserApiTests(TestCase):
             'email': 'exampl@gmail.com',
             'name': 'Test User22',
             'password': 'testpass123',
-        })
+        }, format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_users_cannot_create_supervisors(self):

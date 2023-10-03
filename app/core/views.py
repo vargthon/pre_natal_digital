@@ -3,10 +3,13 @@ Views for the core app.
 """
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets
+from rest_framework.views import APIView
 from rest_framework.permissions import (
     IsAuthenticated
 )
+from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
+from core.serializers import UserSerializer
 
 from core import serializers
 
@@ -102,3 +105,18 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             instance.delete()
         else:
             raise PermissionDenied("Only admin can delete admins.")
+
+
+class MeView(APIView):
+    """
+    Manage the authenticated user.
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get(self, request):
+        """
+        Retrieve the authenticated user.
+        """
+        serializer = self.serializer_class(request.user)
+        return Response(serializer.data)
