@@ -7,3 +7,4 @@ PyJWT
 djangorestframework-simplejwt
 drf-spectacular
 django-cors-headers
+Pillow
