@@ -1,3 +1,5 @@
+import uuid
+import os
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -5,6 +7,14 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 from django.core.exceptions import ValidationError
+
+
+def image_upload_path(instance, filename: str) -> str:
+    """Generate file path for new image"""
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+
+    return os.path.join('uploads', 'images', filename)
 
 
 class UserManager(BaseUserManager):
@@ -53,6 +63,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
+    image = models.ImageField(null=True,
+                              upload_to=image_upload_path)
 
     objects = UserManager()
 

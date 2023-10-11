@@ -7,6 +7,10 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+import tempfile
+import os
+from PIL import Image as PILImage
+
 
 from core.tests.data_test import (
     USER_DATA_TEST,
@@ -15,6 +19,13 @@ from core.tests.data_test import (
 )
 
 CREATE_USER_URL = reverse('core:user-list')
+
+
+def detail_url(user_id):
+    """
+    Return user detail URL.
+    """
+    return reverse('core:user-upload-image', args=[user_id])
 
 
 def create_user(**params):
@@ -602,3 +613,37 @@ class AuthenticationApiTest(TestCase):
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class UserUploadImageTest(TestCase):
+    """Tests for Image Upload API."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(**USER_DATA_TEST)
+        self.client.force_authenticate(self.user)
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.user.delete()
+        return super().tearDown()
+
+    def test_upload_user_image(self):
+        """Test for upload image to user."""
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            image = PILImage.new('RGB', (10, 10))
+            image.save(ntf, format='JPEG')
+            ntf.seek(0)
+            res = self.client.post(
+                detail_url(self.user.id), {'image': ntf}, format='multipart')
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.user.image.path))
+
+    def test_upload_user_image_invalid(self):
+        """Test for upload invalid image to user."""
+        res = self.client.post(
+            detail_url(self.user.id),
+            {'image': 'notimage'}, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

@@ -1,9 +1,14 @@
 """
 Tests for the models of the core app.
 """
+from unittest.mock import patch
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
+
+from core.models import (
+    image_upload_path,
+)
 
 
 def user_model_data_test() -> dict:
@@ -56,3 +61,12 @@ class UserModelTests(TestCase):
 
         self.assertTrue(user.is_superuser)
         self.assertFalse(user.is_staff)
+
+    @patch('core.models.uuid.uuid4')
+    def test_upload_image_file_uuid(self, mock_uuid):
+        """Test generate image path"""
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        file_path = image_upload_path(None, 'myimage.jpg')
+        exp_path = f'uploads/images/{uuid}.jpg'
+        self.assertEqual(file_path, exp_path)

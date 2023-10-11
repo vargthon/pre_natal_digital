@@ -2,12 +2,16 @@
 Views for the core app.
 """
 from django.contrib.auth import get_user_model
-from rest_framework import viewsets
+from rest_framework import (
+    viewsets,
+    status,
+)
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import (
     IsAuthenticated
 )
-from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from core.serializers import UserSerializer
 
@@ -21,6 +25,15 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserSerializer
     permission_classes = (IsAuthenticated,)
     queryset = get_user_model().objects.all()
+
+    def get_serializer_class(self):
+        """
+        Return appropriate serializer class.
+        """
+        if self.action == 'upload_image':
+            return serializers.UserImageSerializer
+
+        return self.serializer_class
 
     def get_object(self):
         """
@@ -43,6 +56,29 @@ class UserViewSet(viewsets.ModelViewSet):
             return serializer.save()
         else:
             raise PermissionDenied("Only superuser can create users.")
+
+    @action(methods=['POST'], detail=True, url_path='upload-image')
+    def upload_image(self, request, pk=None):
+        """
+        Upload an image to a user.
+        """
+        user = self.get_object()
+        serializer = self.get_serializer(
+            user,
+            data=request.data
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     def perform_update(self, serializer):
         """

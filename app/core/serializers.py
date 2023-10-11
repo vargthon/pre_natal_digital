@@ -32,6 +32,23 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
 
+class UserImageSerializer(serializers.ModelSerializer):
+    """Serializer for user image."""
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'image',
+        )
+        read_only_fields = ('id',)
+        extra_kwargs = {
+            'image': {
+                'required': True,
+            }
+        }
+
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
