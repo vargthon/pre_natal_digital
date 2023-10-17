@@ -119,8 +119,10 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         """
         Create a new user.
         """
-        if self.request.user.is_superuser:
-            return serializer.save()
+        if self.request.user.is_staff:
+            user = serializer.save()
+            user.is_active = True
+            return user.save()
         else:
             raise PermissionDenied("Only admin can create admins.")
 

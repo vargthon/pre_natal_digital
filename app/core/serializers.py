@@ -30,6 +30,9 @@ class UserSerializer(serializers.ModelSerializer):
                 'min_length': 8
             }
         }
+    def create(self, validated_data):
+        """Create a new user with encrypted password and return it."""
+        return User.objects.create_user(**validated_data)
 
 
 class UserImageSerializer(serializers.ModelSerializer):

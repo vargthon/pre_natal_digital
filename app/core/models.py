@@ -47,7 +47,7 @@ class UserManager(BaseUserManager):
         """Create and save a new admin"""
         user = self.create_user(email, password, **extra_fields)
         user.is_superuser = True
-        user.is_staff = False
+        user.is_staff = True
 
         user.save(using=self._db)
 
@@ -61,7 +61,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     image = models.ImageField(null=True,
                               upload_to=image_upload_path)
