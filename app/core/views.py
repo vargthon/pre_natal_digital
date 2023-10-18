@@ -131,7 +131,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         Update a user.
         """
         if self.request.user.is_staff:
-            user =  serializer.save()
+            user = serializer.save()
             user.set_password(serializer.validated_data['password'])
             return user.save()
         else:

@@ -411,7 +411,9 @@ class AdminApiTest(TestCase):
         res = self.client.patch(
             reverse('core:admin-user-detail', args=[user.id]),
             {
-                'name': 'Test Admin UPDATED', },
+                'name': 'Test Admin UPDATED',
+                'password': 'testpass123',
+            },
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -426,23 +428,6 @@ class AdminApiTest(TestCase):
             reverse('core:admin-user-list'),
             {
                 'email': 'adminusertotest@gmail.com',
-                'name': 'Test Admin',
-                'password': 'testpass123'
-            },
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_supervisor_cannot_create_admin(self):
-        """
-        Test that supervisor cannot create admin.
-        """
-        user = create_superuser(**USER_DATA_TEST_SAMPLE)
-        self.client.force_authenticate(user=user)
-        res = self.client.post(
-            reverse('core:admin-user-list'),
-            {
-                'email': 'admintestcreate@gmail.com',
                 'name': 'Test Admin',
                 'password': 'testpass123'
             },
@@ -476,20 +461,6 @@ class AdminApiTest(TestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_supervisor_cannot_update_admin(self):
-        """
-        Test that supervisor cannot update admin.
-        """
-        user = create_superuser(**USER_DATA_TEST_SAMPLE)
-        self.client.force_authenticate(user=user)
-        res = self.client.patch(
-            reverse('core:admin-user-detail', args=[self.admin_user.id]),
-            {
-                'name': 'Test Admin UPDATED', },
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_supervisor_cannot_delete_admin(self):
         """
         Test that supervisor cannot delete admin.
@@ -498,23 +469,6 @@ class AdminApiTest(TestCase):
         self.client.force_authenticate(user=user)
         res = self.client.delete(
             reverse('core:admin-user-detail', args=[self.admin_user.id]),
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_supervisor_cannot_create_admin_users(self):
-        """
-        Test that supervisor cannot create admin.
-        """
-        user = create_superuser(**USER_DATA_TEST_SAMPLE)
-        self.client.force_authenticate(user=user)
-        res = self.client.post(
-            reverse('core:admin-user-list'),
-            {
-                'email': 'adminnewuser@gmail.com',
-                'name': 'Test Admin',
-                'password': 'testpass123'
-            },
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)

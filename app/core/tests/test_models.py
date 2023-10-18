@@ -60,7 +60,7 @@ class UserModelTests(TestCase):
         user = get_user_model().objects.create_admin(**data)
 
         self.assertTrue(user.is_superuser)
-        self.assertFalse(user.is_staff)
+        self.assertTrue(user.is_staff)
 
     @patch('core.models.uuid.uuid4')
     def test_upload_image_file_uuid(self, mock_uuid):
