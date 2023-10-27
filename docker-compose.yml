@@ -10,6 +10,7 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/app
+      - dev-static-data:/vol/web
     command: >
       sh -c "python check_db.py --service-name db --ip db --port 5432 &&
              python manage.py migrate &&
@@ -29,3 +30,4 @@ services:
 
 volumes:
   postgres:
+  dev-static-data:

@@ -1,3 +1,5 @@
+import uuid
+import os
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -5,6 +7,22 @@ from django.contrib.auth.models import (
     PermissionsMixin
 )
 from django.core.exceptions import ValidationError
+
+
+def image_upload_path(instance, filename: str) -> str:
+    """Generate file path for new image"""
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+
+    return os.path.join('uploads', 'images', filename)
+
+
+def profile_image_upload_path(instance, filename: str) -> str:
+    """Generate file path for new image"""
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+
+    return os.path.join('uploads', 'images', filename)
 
 
 class UserManager(BaseUserManager):
@@ -37,7 +55,7 @@ class UserManager(BaseUserManager):
         """Create and save a new admin"""
         user = self.create_user(email, password, **extra_fields)
         user.is_superuser = True
-        user.is_staff = False
+        user.is_staff = True
 
         user.save(using=self._db)
 
@@ -51,8 +69,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    image = models.ImageField(null=True,
+                              upload_to=image_upload_path)
 
     objects = UserManager()
 
@@ -60,3 +80,19 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class UserProfile(models.Model):
+    """Custom model for user profile"""
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
+    name = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=255)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    image = models.ImageField(
+        null=True,
+        upload_to=profile_image_upload_path
+    )
+
+    def __str__(self):
+        return self.user.email

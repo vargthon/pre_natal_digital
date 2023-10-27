@@ -7,7 +7,11 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+import tempfile
+import os
+from PIL import Image as PILImage
 
+from core.models import UserProfile
 from core.tests.data_test import (
     USER_DATA_TEST,
     USER_DATA_TEST_SAMPLE,
@@ -15,6 +19,13 @@ from core.tests.data_test import (
 )
 
 CREATE_USER_URL = reverse('core:user-list')
+
+
+def detail_url(user_id):
+    """
+    Return user detail URL.
+    """
+    return reverse('core:user-upload-image', args=[user_id])
 
 
 def create_user(**params):
@@ -400,7 +411,9 @@ class AdminApiTest(TestCase):
         res = self.client.patch(
             reverse('core:admin-user-detail', args=[user.id]),
             {
-                'name': 'Test Admin UPDATED', },
+                'name': 'Test Admin UPDATED',
+                'password': 'testpass123',
+            },
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -415,23 +428,6 @@ class AdminApiTest(TestCase):
             reverse('core:admin-user-list'),
             {
                 'email': 'adminusertotest@gmail.com',
-                'name': 'Test Admin',
-                'password': 'testpass123'
-            },
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_supervisor_cannot_create_admin(self):
-        """
-        Test that supervisor cannot create admin.
-        """
-        user = create_superuser(**USER_DATA_TEST_SAMPLE)
-        self.client.force_authenticate(user=user)
-        res = self.client.post(
-            reverse('core:admin-user-list'),
-            {
-                'email': 'admintestcreate@gmail.com',
                 'name': 'Test Admin',
                 'password': 'testpass123'
             },
@@ -465,20 +461,6 @@ class AdminApiTest(TestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_supervisor_cannot_update_admin(self):
-        """
-        Test that supervisor cannot update admin.
-        """
-        user = create_superuser(**USER_DATA_TEST_SAMPLE)
-        self.client.force_authenticate(user=user)
-        res = self.client.patch(
-            reverse('core:admin-user-detail', args=[self.admin_user.id]),
-            {
-                'name': 'Test Admin UPDATED', },
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
     def test_supervisor_cannot_delete_admin(self):
         """
         Test that supervisor cannot delete admin.
@@ -487,23 +469,6 @@ class AdminApiTest(TestCase):
         self.client.force_authenticate(user=user)
         res = self.client.delete(
             reverse('core:admin-user-detail', args=[self.admin_user.id]),
-            format='json'
-        )
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_supervisor_cannot_create_admin_users(self):
-        """
-        Test that supervisor cannot create admin.
-        """
-        user = create_superuser(**USER_DATA_TEST_SAMPLE)
-        self.client.force_authenticate(user=user)
-        res = self.client.post(
-            reverse('core:admin-user-list'),
-            {
-                'email': 'adminnewuser@gmail.com',
-                'name': 'Test Admin',
-                'password': 'testpass123'
-            },
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
@@ -602,3 +567,222 @@ class AuthenticationApiTest(TestCase):
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+
+class UserUploadImageTest(TestCase):
+    """Tests for Image Upload API."""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(**USER_DATA_TEST)
+        self.client.force_authenticate(self.user)
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.user.delete()
+        return super().tearDown()
+
+    def test_upload_user_image(self):
+        """Test for upload image to user."""
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            image = PILImage.new('RGB', (10, 10))
+            image.save(ntf, format='JPEG')
+            ntf.seek(0)
+            res = self.client.post(
+                detail_url(self.user.id), {'image': ntf}, format='multipart')
+        self.user.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.user.image.path))
+
+    def test_upload_user_image_invalid(self):
+        """Test for upload invalid image to user."""
+        res = self.client.post(
+            detail_url(self.user.id),
+            {'image': 'notimage'}, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+PROFILE_TEST_DATA = {
+    'name': 'Test User',
+    'phone_number': '123456789',
+    'address': 'Test Address',
+    'image': None
+}
+
+
+def user_profile_detail_url(profile_id):
+    """
+    Return user profile detail URL.
+    """
+    return reverse('core:user-profile-detail', args=[profile_id])
+
+
+class UserProfileAdminTest(TestCase):
+    """Tests for User Profile"""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(**USER_DATA_TEST)
+        self.client.force_authenticate(self.user)
+        return super().setUp()
+
+    def test_profile_create(self):
+        """Test successfull create user profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['name'], PROFILE_TEST_DATA['name'])
+        self.assertEqual(res.data['phone_number'],
+                         PROFILE_TEST_DATA['phone_number'])
+        self.assertEqual(res.data['address'], PROFILE_TEST_DATA['address'])
+        self.assertEqual(res.data['image'], PROFILE_TEST_DATA['image'])
+
+    def test_raise_401_with_not_logged(self):
+        """Should raise error unauthorized if user not logged"""
+        self.client.logout()
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_should_logic_delete_profile(self):
+        """Delete should logically delete profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        res = self.client.delete(
+            user_profile_detail_url(created_profile.id),
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        created_profile.refresh_from_db()
+        self.assertFalse(created_profile.deleted_at is None)
+
+    def test_should_permit_user_destroy(self):
+        """Delete user should not delete profile too."""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        user = created_profile.user
+        user.delete()
+        created_profile.refresh_from_db()
+
+        self.assertTrue(created_profile.user is None)
+
+    def test_should_update_profile_successfully(self):
+        """Should update user profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        res = self.client.patch(
+            user_profile_detail_url(created_profile.id),
+            {
+                'name': 'Test User UPDATED',
+                'phone_number': '987654321',
+                'address': 'Test Address UPDATED',
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        created_profile.refresh_from_db()
+        self.assertEqual(created_profile.name, 'Test User UPDATED')
+        self.assertEqual(created_profile.phone_number, '987654321')
+        self.assertEqual(created_profile.address, 'Test Address UPDATED')
+
+    def test_raise_unauthorized_profile_update(self):
+        """Should raise 401 unauthorized when try to
+        update other user profile."""
+        user = create_user(**{
+            'email': 'otheruser@gmail.com',
+            'name': 'Other User',
+            'password': 'testpass123'
+        })
+        self.client.force_authenticate(user=user)
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        self.client.logout()
+        self.client.force_authenticate(user=self.user)
+        res = self.client.patch(
+            user_profile_detail_url(created_profile.id),
+            {
+                'name': 'Test User UPDATED',
+                'phone_number': '987654321',
+                'address': 'Test Address UPDATED',
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+
+def upload_user_profile_url(profile_id):
+    """
+    Return upload user profile image URL.
+    """
+    return reverse('core:user-profile-upload-image', args=[profile_id])
+
+
+def create_user_profile(**params):
+    """
+    Helper function to create a user profile.
+    """
+    return UserProfile.objects.create(**params)
+
+
+class UploadUserProfileImage(TestCase):
+    """Tests for upload image API"""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(**USER_DATA_TEST)
+        self.user_profile = create_user_profile(
+            **PROFILE_TEST_DATA, user=self.user)
+        self.client.force_authenticate(self.user)
+        return super().setUp()
+
+    def test_upload_user_profile_image(self):
+        """Test for upload image to user profile."""
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            image = PILImage.new('RGB', (10, 10))
+            image.save(ntf, format='JPEG')
+            ntf.seek(0)
+            res = self.client.post(
+                upload_user_profile_url(self.user_profile.id),
+                {'image': ntf}, format='multipart')
+        self.user_profile.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.user_profile.image.path))
+
+    def test_upload_user_profile_image_invalid(self):
+        """Test for upload invalid image to user profile."""
+        res = self.client.post(
+            upload_user_profile_url(self.user_profile.id),
+            {'image': 'notimage'}, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

@@ -1,9 +1,15 @@
 """
 Tests for the models of the core app.
 """
+from unittest.mock import patch
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
+
+from core.models import (
+    image_upload_path,
+)
+from core.models import UserProfile
 
 
 def user_model_data_test() -> dict:
@@ -13,6 +19,20 @@ def user_model_data_test() -> dict:
         'password': 'testpass123',
         'name': 'Test User'
     }
+
+
+def user_profile_model_data_test() -> dict:
+    """Return a dictionary of data for testing the UserProfile model."""
+    return {
+        'name': 'Test bio',
+        'address': 'Test location',
+        'phone_number': '999999999999',
+    }
+
+
+def create_user(**params):
+    """Helper function to create a user."""
+    return get_user_model().objects.create_user(**params)
 
 
 class UserModelTests(TestCase):
@@ -55,4 +75,34 @@ class UserModelTests(TestCase):
         user = get_user_model().objects.create_admin(**data)
 
         self.assertTrue(user.is_superuser)
-        self.assertFalse(user.is_staff)
+        self.assertTrue(user.is_staff)
+
+    @patch('core.models.uuid.uuid4')
+    def test_upload_image_file_uuid(self, mock_uuid):
+        """Test generate image path"""
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+        file_path = image_upload_path(None, 'myimage.jpg')
+        exp_path = f'uploads/images/{uuid}.jpg'
+        self.assertEqual(file_path, exp_path)
+
+
+class UserProfileModelTest(TestCase):
+    """Tests for user profile model."""
+
+    def setUp(self) -> None:
+        self.user = create_user(**user_model_data_test())
+        return super().setUp()
+
+    def test_create_user_profile(self):
+        """Test create user profile."""
+        data = user_profile_model_data_test()
+        profile = UserProfile.objects.create(user=self.user, **data)
+        profile.name = data['name']
+        profile.address = data['address']
+        profile.phone_number = data['phone_number']
+        profile.save()
+
+        self.assertEqual(profile.name, data['name'])
+        self.assertEqual(profile.address, data['address'])
+        self.assertEqual(profile.phone_number, data['phone_number'])

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'core',
     'drf_spectacular',
     'corsheaders',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -129,7 +130,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/static/'
+MEDIA_URL = '/static/media/'
+
+MEDIA_ROOT = '/vol/web/media'
+STATIC_ROOT = '/vol/web/static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -148,6 +153,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',  # Certifique-se de que isso está presente.
+
     ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
@@ -158,6 +165,7 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     # other settings
     "SCHEMA_PATH_PREFIX": r"/api/v[1-9][0-9]*",
+    "COMPONENT_SPLIT_REQUEST": True,
 
 }
 SIMPLE_JWT = {
