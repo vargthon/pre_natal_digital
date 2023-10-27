@@ -11,7 +11,7 @@ import tempfile
 import os
 from PIL import Image as PILImage
 
-
+from core.models import UserProfile
 from core.tests.data_test import (
     USER_DATA_TEST,
     USER_DATA_TEST_SAMPLE,
@@ -601,3 +601,141 @@ class UserUploadImageTest(TestCase):
             detail_url(self.user.id),
             {'image': 'notimage'}, format='multipart')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+PROFILE_TEST_DATA = {
+    'name': 'Test User',
+    'phone_number': '123456789',
+    'address': 'Test Address',
+    'image': None
+}
+
+
+def user_profile_detail_url(profile_id):
+    """
+    Return user profile detail URL.
+    """
+    return reverse('core:user-profile-detail', args=[profile_id])
+
+
+class UserProfileAdminTest(TestCase):
+    """Tests for User Profile"""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(**USER_DATA_TEST)
+        self.client.force_authenticate(self.user)
+        return super().setUp()
+
+    def test_profile_create(self):
+        """Test successfull create user profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['name'], PROFILE_TEST_DATA['name'])
+        self.assertEqual(res.data['phone_number'],
+                         PROFILE_TEST_DATA['phone_number'])
+        self.assertEqual(res.data['address'], PROFILE_TEST_DATA['address'])
+        self.assertEqual(res.data['image'], PROFILE_TEST_DATA['image'])
+
+    def test_raise_401_with_not_logged(self):
+        """Should raise error unauthorized if user not logged"""
+        self.client.logout()
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_should_logic_delete_profile(self):
+        """Delete should logically delete profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        res = self.client.delete(
+            user_profile_detail_url(created_profile.id),
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        created_profile.refresh_from_db()
+        self.assertFalse(created_profile.deleted_at is None)
+
+    def test_should_permit_user_destroy(self):
+        """Delete user should not delete profile too."""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        user = created_profile.user
+        user.delete()
+        created_profile.refresh_from_db()
+
+        self.assertTrue(created_profile.user is None)
+
+    def test_should_update_profile_successfully(self):
+        """Should update user profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        res = self.client.patch(
+            user_profile_detail_url(created_profile.id),
+            {
+                'name': 'Test User UPDATED',
+                'phone_number': '987654321',
+                'address': 'Test Address UPDATED',
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        created_profile.refresh_from_db()
+        self.assertEqual(created_profile.name, 'Test User UPDATED')
+        self.assertEqual(created_profile.phone_number, '987654321')
+        self.assertEqual(created_profile.address, 'Test Address UPDATED')
+
+    def test_raise_unauthorized_profile_update(self):
+        """Should raise 401 unauthorized when try to
+        update other user profile."""
+        user = create_user(**{
+            'email': 'otheruser@gmail.com',
+            'name': 'Other User',
+            'password': 'testpass123'
+        })
+        self.client.force_authenticate(user=user)
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        self.client.logout()
+        self.client.force_authenticate(user=self.user)
+        res = self.client.patch(
+            user_profile_detail_url(created_profile.id),
+            {
+                'name': 'Test User UPDATED',
+                'phone_number': '987654321',
+                'address': 'Test Address UPDATED',
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)

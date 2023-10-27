@@ -22,6 +22,10 @@ router.register(
     'admin/users',
     views.AdminUserViewSet,
     basename='admin-user')
+router.register(
+    'user-profiles',
+    views.UserProfileModelView,
+    basename='user-profile')
 
 
 urlpatterns = [

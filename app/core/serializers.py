@@ -6,7 +6,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 from core.models import (
-    User
+    User,
+    UserProfile,
 )
 
 
@@ -51,6 +52,25 @@ class UserImageSerializer(serializers.ModelSerializer):
                 'required': True,
             }
         }
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for user profile objects."""
+    user = UserSerializer(
+        read_only=True,
+    )
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            'id',
+            'name',
+            'phone_number',
+            'address',
+            'image',
+            'user',
+        )
+        read_only_fields = ('id', 'user',)
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

@@ -16,6 +16,8 @@ from rest_framework.exceptions import PermissionDenied
 from core.serializers import UserSerializer
 
 from core import serializers
+from core.models import UserProfile
+from django.utils import timezone
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -160,3 +162,34 @@ class MeView(APIView):
         """
         serializer = self.serializer_class(request.user)
         return Response(serializer.data)
+
+
+class UserProfileModelView(viewsets.ModelViewSet):
+    """
+    Viewsets for user profile model
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.UserProfileSerializer
+    queryset = UserProfile.objects.all()
+
+    def perform_destroy(self, instance):
+        """
+        Delete a user profile.
+        """
+        instance.deleted_at = timezone.now()
+        instance.save()
+
+    def perform_create(self, serializer):
+        """
+        Create a new user profile.
+        """
+        return serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """
+        Update a user profile.
+        """
+        if self.request.user.id == serializer.instance.user.id:
+            return serializer.save()
+        else:
+            raise PermissionDenied("Users only can change their own data.")
