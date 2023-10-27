@@ -172,6 +172,15 @@ class UserProfileModelView(viewsets.ModelViewSet):
     serializer_class = serializers.UserProfileSerializer
     queryset = UserProfile.objects.all()
 
+    def get_serializer_class(self):
+        """
+        Return appropriate serializer class.
+        """
+        if self.action == 'upload_image':
+            return serializers.UserProfileImageSerializer
+
+        return self.serializer_class
+
     def perform_destroy(self, instance):
         """
         Delete a user profile.
@@ -193,3 +202,26 @@ class UserProfileModelView(viewsets.ModelViewSet):
             return serializer.save()
         else:
             raise PermissionDenied("Users only can change their own data.")
+
+    @action(methods=['POST'], detail=True, url_path='upload-image')
+    def upload_image(self, request, pk=None):
+        """
+        Upload an image to a user profile.
+        """
+        user_profile = self.get_object()
+        serializer = self.get_serializer(
+            user_profile,
+            data=request.data
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )

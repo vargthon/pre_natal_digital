@@ -739,3 +739,50 @@ class UserProfileAdminTest(TestCase):
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+
+def upload_user_profile_url(profile_id):
+    """
+    Return upload user profile image URL.
+    """
+    return reverse('core:user-profile-upload-image', args=[profile_id])
+
+
+def create_user_profile(**params):
+    """
+    Helper function to create a user profile.
+    """
+    return UserProfile.objects.create(**params)
+
+
+class UploadUserProfileImage(TestCase):
+    """Tests for upload image API"""
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = create_user(**USER_DATA_TEST)
+        self.user_profile = create_user_profile(
+            **PROFILE_TEST_DATA, user=self.user)
+        self.client.force_authenticate(self.user)
+        return super().setUp()
+
+    def test_upload_user_profile_image(self):
+        """Test for upload image to user profile."""
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            image = PILImage.new('RGB', (10, 10))
+            image.save(ntf, format='JPEG')
+            ntf.seek(0)
+            res = self.client.post(
+                upload_user_profile_url(self.user_profile.id),
+                {'image': ntf}, format='multipart')
+        self.user_profile.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.user_profile.image.path))
+
+    def test_upload_user_profile_image_invalid(self):
+        """Test for upload invalid image to user profile."""
+        res = self.client.post(
+            upload_user_profile_url(self.user_profile.id),
+            {'image': 'notimage'}, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
