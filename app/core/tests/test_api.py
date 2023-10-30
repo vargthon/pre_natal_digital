@@ -641,6 +641,21 @@ class UserProfileAdminTest(TestCase):
         self.assertEqual(res.data['address'], PROFILE_TEST_DATA['address'])
         self.assertEqual(res.data['image'], PROFILE_TEST_DATA['image'])
 
+    def test_create_duplicate_profile_fail(self):
+        """Test fail create duplicate profile"""
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_raise_401_with_not_logged(self):
         """Should raise error unauthorized if user not logged"""
         self.client.logout()
