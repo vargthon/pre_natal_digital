@@ -231,3 +231,17 @@ class UserProfileModelView(viewsets.ModelViewSet):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a user profile.
+        """
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(
+                user=request.user,
+                name=request.user.name,
+            )
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)

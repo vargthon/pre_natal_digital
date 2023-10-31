@@ -22,6 +22,7 @@ router.register(
     'admin/users',
     views.AdminUserViewSet,
     basename='admin-user')
+
 router.register(
     'user-profiles',
     views.UserProfileModelView,
@@ -34,4 +35,10 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='refresh-token'),
     path('token/verify/', TokenVerifyView.as_view(), name='verify-token'),
     path('detail/me/', views.MeView.as_view(), name='me'),
+    path('user-profiles', views.UserProfileModelView.as_view(
+        {
+            'get': 'retrieve',
+            'patch': 'partial_update',
+        }
+    ), name='user-profile'),
 ]
