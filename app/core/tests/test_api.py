@@ -755,6 +755,29 @@ class UserProfileAdminTest(TestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_should_update_profile_without_pk(self):
+        """
+        Test if partial update is successful.
+        """
+        res = self.client.post(
+            reverse('core:user-profile-list'),
+            PROFILE_TEST_DATA,
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        created_profile = UserProfile.objects.get(pk=res.data['id'])
+
+        res = self.client.post(
+            reverse('core:user-profile-update'),
+            {
+                'name': 'Test User UPDATED',
+            },
+            format='json'
+        )
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        created_profile.refresh_from_db()
+        self.assertEqual(created_profile.name, 'Test User UPDATED')
+
 
 def upload_user_profile_url(profile_id):
     """
@@ -768,6 +791,13 @@ def create_user_profile(**params):
     Helper function to create a user profile.
     """
     return UserProfile.objects.create(**params)
+
+
+def upload_image_url():
+    """
+    Return upload image URL.
+    """
+    return reverse('core:image-upload')
 
 
 class UploadUserProfileImage(TestCase):
@@ -788,7 +818,7 @@ class UploadUserProfileImage(TestCase):
             image.save(ntf, format='JPEG')
             ntf.seek(0)
             res = self.client.post(
-                upload_user_profile_url(self.user_profile.id),
+                upload_image_url(),
                 {'image': ntf}, format='multipart')
         self.user_profile.refresh_from_db()
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -798,6 +828,6 @@ class UploadUserProfileImage(TestCase):
     def test_upload_user_profile_image_invalid(self):
         """Test for upload invalid image to user profile."""
         res = self.client.post(
-            upload_user_profile_url(self.user_profile.id),
+            upload_image_url(),
             {'image': 'notimage'}, format='multipart')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

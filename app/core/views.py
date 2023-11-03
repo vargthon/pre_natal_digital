@@ -245,3 +245,86 @@ class UserProfileModelView(viewsets.ModelViewSet):
             )
         serializer = self.get_serializer(profile)
         return Response(serializer.data)
+
+
+class UserProfileImageUploadView(APIView):
+    """View for uploading images to user profile"""
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.UserProfileImageSerializer
+
+    def post(self, request, pk=None):
+        """Handle uploading an image to a user profile"""
+        user_profile = UserProfile.objects.get(user=request.user)
+        if not user_profile:
+            raise ValidationError("You don't have a profile created.")
+
+        serializer = self.serializer_class(
+            user_profile,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class UserProfileUpdateView(APIView):
+    """View for updating user profile"""
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.UserProfileSerializer
+
+    def post(self, request, pk=None):
+        """Handle updating a user profile"""
+        user_profile = UserProfile.objects.get(user=request.user)
+        if not user_profile:
+            raise ValidationError("You don't have a profile created.")
+
+        serializer = self.serializer_class(
+            user_profile,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class UserProfileView(APIView):
+    """
+    Retrieve a user profile.
+    without pk, by token
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = serializers.UserProfileSerializer
+
+    def get(self, request, pk=None):
+        """
+        Retrieve a user profile.
+        """
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(
+                user=request.user,
+                name=request.user.name,
+            )
+        serializer = self.serializer_class(profile)
+        return Response(serializer.data)
