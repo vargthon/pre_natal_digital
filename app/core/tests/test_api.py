@@ -604,11 +604,23 @@ class UserUploadImageTest(TestCase):
 
 
 PROFILE_TEST_DATA = {
-    'name': 'Test User',
-    'phone_number': '123456789',
-    'address': 'Test Address',
-    'image': None
-}
+        'name': 'Test bio',
+        'phone_number': '999999999999',
+        'full_name': 'Test Full Name',
+        'sus_card_number': '99999999999999999999',
+        'nis_number': '99999999999999999999',
+        'birth_date': '2021-01-01',
+        'prefered_name': 'Test Preferred Name',
+        'race': 'CAUCASIAN',
+        'ethnicity': 'WHITE',
+        'work_outside_home': False,
+        'occupation': 'Test Occupation',
+        'mobile_phone': '999999999999',
+        'email': 'test@gmail.com',
+        'due_date': '2021-01-01',
+        'birth_date': '2021-01-01',
+        'image': None
+    }
 
 
 def user_profile_detail_url(profile_id):
@@ -638,7 +650,6 @@ class UserProfileAdminTest(TestCase):
         self.assertEqual(res.data['name'], PROFILE_TEST_DATA['name'])
         self.assertEqual(res.data['phone_number'],
                          PROFILE_TEST_DATA['phone_number'])
-        self.assertEqual(res.data['address'], PROFILE_TEST_DATA['address'])
         self.assertEqual(res.data['image'], PROFILE_TEST_DATA['image'])
 
     def test_create_duplicate_profile_fail(self):
@@ -715,7 +726,6 @@ class UserProfileAdminTest(TestCase):
             {
                 'name': 'Test User UPDATED',
                 'phone_number': '987654321',
-                'address': 'Test Address UPDATED',
             },
             format='json'
         )
@@ -723,7 +733,6 @@ class UserProfileAdminTest(TestCase):
         created_profile.refresh_from_db()
         self.assertEqual(created_profile.name, 'Test User UPDATED')
         self.assertEqual(created_profile.phone_number, '987654321')
-        self.assertEqual(created_profile.address, 'Test Address UPDATED')
 
     def test_raise_unauthorized_profile_update(self):
         """Should raise 401 unauthorized when try to
@@ -749,7 +758,6 @@ class UserProfileAdminTest(TestCase):
             {
                 'name': 'Test User UPDATED',
                 'phone_number': '987654321',
-                'address': 'Test Address UPDATED',
             },
             format='json'
         )

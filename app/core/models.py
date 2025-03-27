@@ -1,3 +1,4 @@
+import datetime
 import uuid
 import os
 from django.db import models
@@ -82,13 +83,35 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class Address(models.Model):
+    """Model for Address"""
+    name = models.CharField(max_length=255, blank=True, null=True)
+    cep = models.CharField(max_length=255, blank=True, null=True)
+    street = models.CharField(max_length=255, blank=True, null=True)
+    complement = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+    state = models.CharField(max_length=255, blank=True, null=True)
+    
+    
 class UserProfile(models.Model):
     """Custom model for user profile"""
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=255)
-    address = models.CharField(max_length=255)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     phone_number = models.CharField(max_length=255)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    full_name = models.CharField(max_length=255)
+    sus_card_number = models.CharField(max_length=20, unique=True)
+    birth_date = models.DateField(null=True, blank=True)
+    nis_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    prefered_name = models.CharField(max_length=255, blank=True, null=True)
+    race = models.CharField(max_length=50)
+    ethnicity = models.CharField(max_length=50)
+    work_outside_home = models.BooleanField(default=False)
+    occupation = models.CharField(max_length=255, blank=True, null=True)
+    mobile_phone = models.CharField(max_length=20)
+    email = models.EmailField(max_length=255, blank=True, null=True)
+    due_date = models.DateField(null=True, blank=True)    
     image = models.ImageField(
         null=True,
         upload_to=profile_image_upload_path
