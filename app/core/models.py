@@ -31,20 +31,21 @@ class UserManager(BaseUserManager):
     Custom User Manager class
     """
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, cpf, password=None, **extra_fields):
         """Create and save a new user"""
-        if not email:
-            raise ValidationError('Users must have an email address')
-        user = self.model(email=self.normalize_email(email), **extra_fields)
+        if not cpf:
+            raise ValidationError('Users must have an cpf')
+        #user = self.model(email=self.normalize_email(email), **extra_fields)
+        user = self.model(cpf=cpf, **extra_fields)
         user.set_password(password)
         user.is_active = True
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, cpf, password, **extra_fields):
         """Create and save a new superuser"""
-        user = self.create_user(email, password, **extra_fields)
+        user = self.create_user(cpf, password, **extra_fields)
         user.is_superuser = False
         user.is_staff = True
 
@@ -52,9 +53,9 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_admin(self, email, password, **extra_fields):
+    def create_admin(self, cpf, password, **extra_fields):
         """Create and save a new admin"""
-        user = self.create_user(email, password, **extra_fields)
+        user = self.create_user(cpf, password, **extra_fields)
         user.is_superuser = True
         user.is_staff = True
 
@@ -69,6 +70,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     cpf = models.CharField(max_length=11, unique=True)
     email = models.EmailField(max_length=255, unique=True)
+    phone = models.CharField(max_length=255, blank=True, null=True)
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

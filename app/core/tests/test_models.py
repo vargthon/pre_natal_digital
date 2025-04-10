@@ -56,14 +56,6 @@ class UserModelTests(TestCase):
         self.assertEqual(user.email, data['email'])
         self.assertTrue(user.check_password(data['password']))
 
-    def test_new_user_email_normalized(self):
-        """Test the email for a new user is normalized."""
-        data = user_model_data_test()
-        data['email'] = 'example@Gmail.com'
-        user = get_user_model().objects.create_user(**data)
-
-        self.assertEqual(user.email, data['email'].lower())
-
     def test_create_user_same_email_raises_error(self):
         """Test creating a user with the same email raises an error."""
         data = user_model_data_test()

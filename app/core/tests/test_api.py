@@ -64,9 +64,11 @@ class UserApiTests(TestCase):
         user = create_user(**USER_DATA_TEST_SAMPLE)
         self.client.force_authenticate(user=user)
         res = self.client.post(CREATE_USER_URL, {
-            'email': 'newuser@gmail.com',
+            'email': 'newuser1@gmail.com',
             'name': 'Test User',
-            'password': 'testpass123'
+            'password': 'testpass123',
+            'cpf': '1234567891',
+            'phone': '99999999999'
         }, format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -146,6 +148,7 @@ class UserApiTests(TestCase):
             'email': 'exampl@gmail.com',
             'name': 'Test User22',
             'password': 'testpass123',
+            'cpf': '1234589075'
         }, format='json')
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -320,6 +323,8 @@ class AdminApiTest(TestCase):
         res = self.client.post(
             reverse('core:admin-user-list'),
             {
+                'cpf': '123458901',
+                'phone': '99999999999',
                 'email': 'adminuser@gmail.com',
                 'name': 'Test Admin',
                 'password': 'testpass123'
@@ -379,6 +384,7 @@ class AdminApiTest(TestCase):
         res = self.client.post(
             reverse('core:admin-user-list'),
             {
+                'cpf': '123456701',
                 'email': 'adminnewuser@gmail.com',
                 'name': 'Test Admin',
                 'password': 'testpass123'
@@ -400,6 +406,7 @@ class AdminApiTest(TestCase):
         res = self.client.post(
             reverse('core:admin-user-list'),
             {
+                'cpf': '123456781',
                 'email': 'adminnewuser@gmail.com',
                 'name': 'Test Admin',
                 'password': 'testpass123'
@@ -427,6 +434,7 @@ class AdminApiTest(TestCase):
         res = self.client.post(
             reverse('core:admin-user-list'),
             {
+                'cpf': '123456901',
                 'email': 'adminusertotest@gmail.com',
                 'name': 'Test Admin',
                 'password': 'testpass123'
@@ -722,7 +730,9 @@ class UserProfileAdminTest(TestCase):
         user = create_user(**{
             'email': 'otheruser@gmail.com',
             'name': 'Other User',
-            'password': 'testpass123'
+            'password': 'testpass123',
+            'cpf': '123456789011',
+            'phone': '99999999999'
         })
         self.client.force_authenticate(user=user)
         res = self.client.post(

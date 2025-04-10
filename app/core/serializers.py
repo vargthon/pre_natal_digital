@@ -23,7 +23,9 @@ class UserSerializer(serializers.ModelSerializer):
             'name',
             'is_active',
             'is_staff',
-            'is_superuser'
+            'is_superuser',
+            'phone',
+            'cpf'
         )
         extra_kwargs = {
             'password': {
@@ -93,6 +95,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['cpf'] = user.cpf
+        token['phone'] = user.phone
         # Add custom claims
         token['admin'] = user.is_staff
         # ...
