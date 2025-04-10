@@ -16,6 +16,7 @@ def user_model_data_test() -> dict:
     """Return a dictionary of data for testing the User model."""
     return {
         'email': 'user@example.com',
+        'cpf': '12345678901',
         'password': 'testpass123',
         'name': 'Test User'
     }
@@ -36,19 +37,6 @@ def user_profile_model_data_test() -> dict:
     """Return a dictionary of data for testing the UserProfile model."""
     return {
         'name': 'Test bio',
-        'phone_number': '999999999999',
-        'full_name': 'Test Full Name',
-        'sus_card_number': '99999999999999999999',
-        'nis_number': '99999999999999999999',
-        'birth_date': '2021-01-01',
-        'prefered_name': 'Test Preferred Name',
-        'race': 'CAUCASIAN',
-        'ethnicity': 'WHITE',
-        'work_outside_home': False,
-        'occupation': 'Test Occupation',
-        'mobile_phone': '999999999999',
-        'email': 'test@gmail.com',
-        'due_date': '2021-01-01',
     }
 
 
@@ -121,8 +109,7 @@ class UserProfileModelTest(TestCase):
         data = user_profile_model_data_test()
         profile = UserProfile.objects.create(user=self.user, **data)
         profile.name = data['name']
-        profile.phone_number = data['phone_number']
         profile.save()
 
         self.assertEqual(profile.name, data['name'])
-        self.assertEqual(profile.phone_number, data['phone_number'])
+        self.assertEqual(profile.user, self.user)

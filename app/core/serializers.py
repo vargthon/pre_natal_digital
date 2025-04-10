@@ -65,8 +65,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'phone_number',
-            'address',
             'image',
             'user',
         )
@@ -94,7 +92,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-
+        token['cpf'] = user.cpf
         # Add custom claims
         token['admin'] = user.is_staff
         # ...

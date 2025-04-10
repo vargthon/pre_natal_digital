@@ -67,7 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     Custom User model class
     """
-
+    cpf = models.CharField(max_length=11, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
@@ -77,10 +77,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'cpf'
 
     def __str__(self):
-        return self.email
+        return self.cpf
 
 
 class Address(models.Model):
@@ -98,20 +98,9 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=255)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
-    phone_number = models.CharField(max_length=255)
     deleted_at = models.DateTimeField(null=True, blank=True)
-    full_name = models.CharField(max_length=255)
-    sus_card_number = models.CharField(max_length=20, unique=True)
-    birth_date = models.DateField(null=True, blank=True)
-    nis_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
-    prefered_name = models.CharField(max_length=255, blank=True, null=True)
-    race = models.CharField(max_length=50)
-    ethnicity = models.CharField(max_length=50)
-    work_outside_home = models.BooleanField(default=False)
-    occupation = models.CharField(max_length=255, blank=True, null=True)
-    mobile_phone = models.CharField(max_length=20)
-    email = models.EmailField(max_length=255, blank=True, null=True)
-    due_date = models.DateField(null=True, blank=True)    
+    created_at = models.DateField(null=True, blank=True, auto_now_add=True)
+    updated_at = models.DateField(null=True, blank=True, auto_now=True) 
     image = models.ImageField(
         null=True,
         upload_to=profile_image_upload_path

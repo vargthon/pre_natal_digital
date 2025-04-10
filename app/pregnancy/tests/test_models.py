@@ -96,3 +96,4 @@ class PregnancyModelTest(TestCase):
             address=address,
             emergency_contact=emergency_contact)
         self.assertEqual(pregnant_woman.full_name, data['full_name'])
+        

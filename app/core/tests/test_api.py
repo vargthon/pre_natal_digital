@@ -490,7 +490,7 @@ class AuthenticationApiTest(TestCase):
         res = self.client.post(
             reverse('core:token'),
             {
-                'email': USER_DATA_TEST['email'],
+                'cpf': USER_DATA_TEST['cpf'],
                 'password': USER_DATA_TEST['password']
             },
             format='json'
@@ -504,7 +504,7 @@ class AuthenticationApiTest(TestCase):
         res = self.client.post(
             reverse('core:token'),
             {
-                'email': USER_DATA_TEST['email'],
+                'cpf': USER_DATA_TEST['cpf'],
                 'password': 'wrongpassword'
             },
             format='json'
@@ -518,7 +518,7 @@ class AuthenticationApiTest(TestCase):
         res = self.client.post(
             reverse('core:token'),
             {
-                'email': USER_DATA_TEST['email'],
+                'cpf': USER_DATA_TEST['cpf'],
                 'password': USER_DATA_TEST['password']
             },
             format='json'
@@ -553,7 +553,7 @@ class AuthenticationApiTest(TestCase):
         res = self.client.post(
             reverse('core:token'),
             {
-                'email': USER_DATA_TEST['email'],
+                'cpf': USER_DATA_TEST['cpf'],
                 'password': USER_DATA_TEST['password']
             },
             format='json'
@@ -605,20 +605,6 @@ class UserUploadImageTest(TestCase):
 
 PROFILE_TEST_DATA = {
         'name': 'Test bio',
-        'phone_number': '999999999999',
-        'full_name': 'Test Full Name',
-        'sus_card_number': '99999999999999999999',
-        'nis_number': '99999999999999999999',
-        'birth_date': '2021-01-01',
-        'prefered_name': 'Test Preferred Name',
-        'race': 'CAUCASIAN',
-        'ethnicity': 'WHITE',
-        'work_outside_home': False,
-        'occupation': 'Test Occupation',
-        'mobile_phone': '999999999999',
-        'email': 'test@gmail.com',
-        'due_date': '2021-01-01',
-        'birth_date': '2021-01-01',
         'image': None
     }
 
@@ -648,8 +634,6 @@ class UserProfileAdminTest(TestCase):
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data['name'], PROFILE_TEST_DATA['name'])
-        self.assertEqual(res.data['phone_number'],
-                         PROFILE_TEST_DATA['phone_number'])
         self.assertEqual(res.data['image'], PROFILE_TEST_DATA['image'])
 
     def test_create_duplicate_profile_fail(self):
@@ -725,14 +709,12 @@ class UserProfileAdminTest(TestCase):
             user_profile_detail_url(created_profile.id),
             {
                 'name': 'Test User UPDATED',
-                'phone_number': '987654321',
             },
             format='json'
         )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         created_profile.refresh_from_db()
         self.assertEqual(created_profile.name, 'Test User UPDATED')
-        self.assertEqual(created_profile.phone_number, '987654321')
 
     def test_raise_unauthorized_profile_update(self):
         """Should raise 401 unauthorized when try to
@@ -757,7 +739,6 @@ class UserProfileAdminTest(TestCase):
             user_profile_detail_url(created_profile.id),
             {
                 'name': 'Test User UPDATED',
-                'phone_number': '987654321',
             },
             format='json'
         )
