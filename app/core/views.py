@@ -21,6 +21,7 @@ from core.serializers import UserSerializer
 from core import serializers
 from core.models import UserProfile
 from django.utils import timezone
+from rest_framework.permissions import AllowAny
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -58,9 +59,12 @@ class UserViewSet(viewsets.ModelViewSet):
         Create a new user.
         """
         if self.request.user.is_staff:
-            return serializer.save()
+            user = serializer.save()
+            user.is_active = True
+            return user.save()
         else:
-            raise PermissionDenied("Only superuser can create users.")
+            raise PermissionDenied("Only admin can create admins.")
+
 
     @action(methods=['POST'], detail=True, url_path='upload-image')
     def upload_image(self, request, pk=None):
@@ -106,6 +110,26 @@ class UserViewSet(viewsets.ModelViewSet):
         else:
             raise PermissionDenied("Only superuser can delete users.")
 
+
+class UserRegisterViewSet(APIView):
+    permission_classes = (AllowAny,)  # Permitir acesso sem autenticação
+    serializer_class = serializers.UserRegisterSerializer
+
+    def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+            return Response(
+                {
+                    'user': UserSerializer(user).data,
+                    'message': 'User created successfully.'
+                },
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            print(e)
+            raise e
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     """

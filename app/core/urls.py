@@ -42,4 +42,6 @@ urlpatterns = [
     path('user-profiles/image-upload',
          views.UserProfileImageUploadView.as_view(),
          name='image-upload'),
+    path('user-register/', views.UserRegisterViewSet.as_view(),
+         name='user-register'),
 ]
