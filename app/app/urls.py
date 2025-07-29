@@ -25,6 +25,10 @@ urlpatterns = [
         'api/v1/',
         include('core.urls', namespace='core'),
     ),
+    path(
+        'api/v1/',
+        include('informations.urls', namespace='informations'),
+    ),
  
 ]
 
