@@ -1,0 +1,12 @@
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Reminder
+from .serializers import ReminderSerializer
+
+
+
+class ReminderViewSet(viewsets.ModelViewSet):
+    queryset = Reminder.objects.filter(user=None).all()
+    serializer_class = ReminderSerializer
+    permission_classes = [IsAuthenticated]

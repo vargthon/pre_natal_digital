@@ -29,6 +29,10 @@ urlpatterns = [
         'api/v1/',
         include('informations.urls', namespace='informations'),
     ),
+    path(
+        'api/v1/',
+        include('reminders.urls', namespace='reminders'),
+    ),
  
 ]
 
