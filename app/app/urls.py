@@ -25,6 +25,7 @@ urlpatterns = [
         'api/v1/',
         include('core.urls', namespace='core'),
     ),
+ 
 ]
 
 if settings.DEBUG:

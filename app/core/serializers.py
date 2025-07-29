@@ -49,7 +49,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'password',
             'name',
             'phone',
-            'cpf'
+            'cpf',
+
         )
         extra_kwargs = {
             'password': {
@@ -94,6 +95,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'name',
             'image',
             'user',
+            'sus_card_number',
+            'birth_date',
+            'nis_number',
+            'prefered_name',
+            'race',
+            'ethnicity',
+            'work_outside_home',
+            'occupation',
+            'mobile_phone',
+            'email',
+            'due_date'
         )
         read_only_fields = ('id', 'user',)
 
